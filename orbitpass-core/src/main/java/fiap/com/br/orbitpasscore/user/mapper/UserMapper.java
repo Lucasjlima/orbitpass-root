@@ -2,7 +2,9 @@ package fiap.com.br.orbitpasscore.user.mapper;
 
 import fiap.com.br.orbitpasscore.ticket.entity.Ticket;
 import fiap.com.br.orbitpasscore.user.dto.request.UserRequest;
+import fiap.com.br.orbitpasscore.user.dto.request.UserUpdateRequest;
 import fiap.com.br.orbitpasscore.user.dto.response.UserResponse;
+import fiap.com.br.orbitpasscore.user.entity.Role;
 import fiap.com.br.orbitpasscore.user.entity.User;
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +19,15 @@ public final class UserMapper {
                 .name(request.name())
                 .email(request.email())
                 .password(request.password())
-                .role(request.role())
+                .role(Role.DEFAULT_USER)
+                .phone(request.phone())
+                .build();
+    }
+
+    public static User toEntity(UserUpdateRequest request) {
+        return User.builder()
+                .name(request.name())
+                .email(request.email())
                 .phone(request.phone())
                 .build();
     }
