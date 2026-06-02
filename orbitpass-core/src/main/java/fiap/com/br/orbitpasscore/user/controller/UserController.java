@@ -1,32 +1,23 @@
 package fiap.com.br.orbitpasscore.user.controller;
 
-import fiap.com.br.orbitpasscore.security.UserDetailsImpl;
 import fiap.com.br.orbitpasscore.user.dto.request.LoginRequest;
 import fiap.com.br.orbitpasscore.user.dto.request.UserRequest;
 import fiap.com.br.orbitpasscore.user.dto.request.UserUpdateRequest;
 import fiap.com.br.orbitpasscore.user.dto.response.LoginResponse;
 import fiap.com.br.orbitpasscore.user.dto.response.UserResponse;
-import fiap.com.br.orbitpasscore.user.entity.Role;
 import fiap.com.br.orbitpasscore.user.entity.User;
 import fiap.com.br.orbitpasscore.user.mapper.UserMapper;
 import fiap.com.br.orbitpasscore.user.service.AuthService;
 import fiap.com.br.orbitpasscore.user.service.UserService;
 import jakarta.validation.Valid;
-import java.net.URI;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -49,15 +40,16 @@ public class UserController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> findById(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserDetailsImpl principal) {
-        ensureOwnerOrAdmin(principal, id);
+    @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #id")
+    public ResponseEntity<UserResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(UserMapper.toResponse(userService.findById(id)));
     }
 
+
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> findAll() {
         return ResponseEntity.ok(userService.findAll()
                 .stream()
@@ -65,30 +57,20 @@ public class UserController {
                 .toList());
     }
 
+
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #id")
     public ResponseEntity<UserResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid UserUpdateRequest request,
-            @AuthenticationPrincipal UserDetailsImpl principal) {
-        ensureOwnerOrAdmin(principal, id);
+            @RequestBody @Valid UserUpdateRequest request) {
         User updated = userService.updateUser(id, UserMapper.toEntity(request));
         return ResponseEntity.ok(UserMapper.toResponse(updated));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
-
-    private void ensureOwnerOrAdmin(UserDetailsImpl principal, Long targetId) {
-        if (principal == null) {
-            throw new AccessDeniedException("Authentication required");
-        }
-        boolean isAdmin = principal.getUser().getRole() == Role.ADMIN;
-        boolean isOwner = targetId.equals(principal.getId());
-        if (!isAdmin && !isOwner) {
-            throw new AccessDeniedException("You are not allowed to access this resource");
-        }
     }
 }
