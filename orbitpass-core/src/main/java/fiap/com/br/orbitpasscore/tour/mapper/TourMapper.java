@@ -1,6 +1,7 @@
 package fiap.com.br.orbitpasscore.tour.mapper;
 
 import fiap.com.br.orbitpasscore.tour.dto.request.TourRequest;
+import fiap.com.br.orbitpasscore.tour.dto.request.TourUpdateRequest;
 import fiap.com.br.orbitpasscore.tour.dto.response.TourResponse;
 import fiap.com.br.orbitpasscore.tour.entity.Tour;
 import fiap.com.br.orbitpasscore.tourdate.entity.TourDate;
@@ -13,6 +14,15 @@ public final class TourMapper {
     }
 
     public static Tour toEntity(TourRequest request) {
+        return Tour.builder()
+                .name(request.name())
+                .description(request.description())
+                .destination(request.destination())
+                .price(request.price())
+                .build();
+    }
+
+    public static Tour toEntity(TourUpdateRequest request) {
         return Tour.builder()
                 .name(request.name())
                 .description(request.description())

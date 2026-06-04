@@ -1,5 +1,8 @@
 package fiap.com.br.orbitpasscore.common.exception;
 
+import fiap.com.br.orbitpasscore.tour.exception.TourNotFoundException;
+import fiap.com.br.orbitpasscore.tourdate.exception.InvalidTourDateException;
+import fiap.com.br.orbitpasscore.tourdate.exception.TourDateNotFoundException;
 import fiap.com.br.orbitpasscore.user.exception.EmailAlreadyRegisteredException;
 import fiap.com.br.orbitpasscore.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +23,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(UserNotFoundException ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(TourNotFoundException.class)
+    public ResponseEntity<ApiError> handleTourNotFound(TourNotFoundException ex, HttpServletRequest request) {
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(TourDateNotFoundException.class)
+    public ResponseEntity<ApiError> handleTourDateNotFound(TourDateNotFoundException ex, HttpServletRequest request) {
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(InvalidTourDateException.class)
+    public ResponseEntity<ApiError> handleInvalidTourDate(InvalidTourDateException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), request);
     }
 
     @ExceptionHandler(EmailAlreadyRegisteredException.class)
