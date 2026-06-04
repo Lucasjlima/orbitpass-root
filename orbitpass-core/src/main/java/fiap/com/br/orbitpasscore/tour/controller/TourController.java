@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,12 +51,14 @@ public class TourController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DEFAULT_USER')")
+    @Cacheable(value = "tours", key = "#id")
     public ResponseEntity<TourResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(TourMapper.toResponse(tourService.findById(id)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "tours", key = "#id")
     public ResponseEntity<TourResponse> update(
             @PathVariable Long id,
             @RequestBody @Valid TourUpdateRequest request) {
@@ -64,6 +68,7 @@ public class TourController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "tours", key = "#id")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         tourService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
