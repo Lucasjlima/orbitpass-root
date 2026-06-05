@@ -7,6 +7,7 @@ import fiap.com.br.orbitpasscore.tourdate.exception.InvalidTourDateException;
 import fiap.com.br.orbitpasscore.tourdate.exception.TourDateNotFoundException;
 import fiap.com.br.orbitpasscore.user.exception.EmailAlreadyRegisteredException;
 import fiap.com.br.orbitpasscore.user.exception.UserNotFoundException;
+import fiap.com.br.orbitpasscore.vectorstore.exception.ChatbotException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -84,6 +85,11 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 details);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(ChatbotException.class)
+    public ResponseEntity<ApiError> handleChatbot(ChatbotException ex, HttpServletRequest request) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "AI Service Error", ex.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)

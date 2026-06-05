@@ -2,6 +2,7 @@ package fiap.com.br.orbitpasscore.vectorstore.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fiap.com.br.orbitpasscore.vectorstore.exception.ChatbotException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -30,49 +31,72 @@ public class VectorStoreService {
     private static final String TOUR_AVAILABILITY_TOOL = "buscarToursDisponiveis";
 
     private static final String SYSTEM_INSTRUCTIONS = """
-            You are an OrbitPass space travel assistant. You have access to destination medical information. \
-            ALWAYS check medical restrictions from the provided context BEFORE discussing tour dates. \
-            If a user mentions any health condition, prioritize safety warnings above all. \
-            You also have access to a tool called buscarToursDisponiveis to check real-time tour availability.""";
+            You are an OrbitPass space travel assistant with access to medical safety information about \
+            space destinations and a tool to check real-time tour availability.
+
+            MANDATORY PROTOCOL:
+            1. ALWAYS analyze the provided context for medical restrictions relevant to the user's query \
+            or any health conditions they mention.
+            2. If the user mentions ANY health condition (heart disease, hypertension, musculoskeletal \
+            disorders, diabetes, etc.), you MUST provide the safety warning and contraindications BEFORE \
+            discussing any tour dates.
+            3. Only after addressing medical safety should you use the buscarToursDisponiveis tool to check \
+            tour availability.
+            4. If the destination has absolute contraindications for the user's health condition, strongly \
+            advise against the trip.
+
+            Context (medical and destination information):""";
 
     private final VectorStore vectorStore;
     private final ChatModel chatModel;
     private final ObjectMapper objectMapper;
 
     public void seedDocuments() {
-        List<Map<String, String>> entries = readDestinations();
+        try {
+            List<Map<String, String>> entries = readDestinations();
 
-        List<Document> documents = entries.stream()
-                .map(entry -> {
-                    String content = entry.get("content");
-                    String name = entry.get("name");
-                    UUID id = UUID.nameUUIDFromBytes(content.getBytes(StandardCharsets.UTF_8));
-                    return new Document(id.toString(), content, Map.of("name", name));
-                })
-                .toList();
+            List<Document> documents = entries.stream()
+                    .map(entry -> {
+                        String content = entry.get("content");
+                        String name = entry.get("name");
+                        UUID id = UUID.nameUUIDFromBytes(content.getBytes(StandardCharsets.UTF_8));
+                        return new Document(id.toString(), content, Map.of("name", name));
+                    })
+                    .toList();
 
-        vectorStore.add(documents);
+            vectorStore.add(documents);
+        } catch (ChatbotException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ChatbotException("Failed to seed documents", e);
+        }
     }
 
     public String chat(String userMessage) {
-        List<Document> context = vectorStore.similaritySearch(
-                SearchRequest.builder().query(userMessage).topK(3).build());
+        try {
+            List<Document> context = vectorStore.similaritySearch(
+                    SearchRequest.builder().query(userMessage).topK(3).build());
 
-        String contextText = context.stream()
-                .map(Document::getText)
-                .collect(Collectors.joining("\n\n"));
+            String contextText = context.stream()
+                    .map(Document::getText)
+                    .collect(Collectors.joining("\n\n"));
 
-        SystemMessage systemMessage = new SystemMessage(
-                SYSTEM_INSTRUCTIONS + "\n\nContext:\n" + contextText);
-        UserMessage humanMessage = new UserMessage(userMessage);
+            SystemMessage systemMessage = new SystemMessage(
+                    SYSTEM_INSTRUCTIONS + "\n" + contextText);
+            UserMessage humanMessage = new UserMessage(userMessage);
 
-        ToolCallingChatOptions options = ToolCallingChatOptions.builder()
-                .toolNames(TOUR_AVAILABILITY_TOOL)
-                .build();
+            ToolCallingChatOptions options = ToolCallingChatOptions.builder()
+                    .toolNames(TOUR_AVAILABILITY_TOOL)
+                    .build();
 
-        Prompt prompt = new Prompt(List.of((Message) systemMessage, humanMessage), options);
+            Prompt prompt = new Prompt(List.of((Message) systemMessage, humanMessage), options);
 
-        return chatModel.call(prompt).getResult().getOutput().getText();
+            return chatModel.call(prompt).getResult().getOutput().getText();
+        } catch (ChatbotException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ChatbotException("Failed to process chat request", e);
+        }
     }
 
     private List<Map<String, String>> readDestinations() {
