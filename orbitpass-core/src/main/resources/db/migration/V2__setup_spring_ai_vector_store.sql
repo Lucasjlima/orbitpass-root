@@ -4,7 +4,7 @@ CREATE TABLE vector_store (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     content TEXT,
     metadata JSONB,
-    embedding VECTOR(1536)
+    embedding VECTOR(768)
 );
 
 CREATE INDEX ON vector_store

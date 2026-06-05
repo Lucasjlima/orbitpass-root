@@ -35,6 +35,6 @@ public class VectorStore {
     @Column(columnDefinition = "jsonb")
     private String metadata;
 
-    @Column(columnDefinition = "vector(1536)")
+    @Column(columnDefinition = "vector(768)")
     private float[] embedding;
 }
