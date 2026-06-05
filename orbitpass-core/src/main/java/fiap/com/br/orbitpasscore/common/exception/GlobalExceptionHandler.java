@@ -1,5 +1,7 @@
 package fiap.com.br.orbitpasscore.common.exception;
 
+import fiap.com.br.orbitpasscore.ticket.exception.InsufficientSpotsException;
+import fiap.com.br.orbitpasscore.ticket.exception.TicketNotFoundException;
 import fiap.com.br.orbitpasscore.tour.exception.TourNotFoundException;
 import fiap.com.br.orbitpasscore.tourdate.exception.InvalidTourDateException;
 import fiap.com.br.orbitpasscore.tourdate.exception.TourDateNotFoundException;
@@ -38,6 +40,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidTourDateException.class)
     public ResponseEntity<ApiError> handleInvalidTourDate(InvalidTourDateException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(TicketNotFoundException.class)
+    public ResponseEntity<ApiError> handleTicketNotFound(TicketNotFoundException ex, HttpServletRequest request) {
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(InsufficientSpotsException.class)
+    public ResponseEntity<ApiError> handleInsufficientSpots(InsufficientSpotsException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), request);
     }
 
     @ExceptionHandler(EmailAlreadyRegisteredException.class)
