@@ -5,6 +5,7 @@ import fiap.com.br.orbitpasscore.tour.exception.TourNotFoundException;
 import fiap.com.br.orbitpasscore.tour.repository.TourRepository;
 import fiap.com.br.orbitpasscore.tourdate.dto.request.TourDateRequest;
 import fiap.com.br.orbitpasscore.tourdate.dto.request.TourDateUpdateRequest;
+import fiap.com.br.orbitpasscore.tourdate.dto.response.TourAvailabilityInfo;
 import fiap.com.br.orbitpasscore.tourdate.entity.TourDate;
 import fiap.com.br.orbitpasscore.tourdate.exception.InvalidTourDateException;
 import fiap.com.br.orbitpasscore.tourdate.exception.TourDateNotFoundException;
@@ -64,6 +65,22 @@ public class TourDateService {
         existing.setReturnDate(request.returnDate());
         existing.setTotalSpots(request.totalSpots());
         return tourDateRepository.save(existing);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TourAvailabilityInfo> findAvailabilityByDestination(String destination) {
+        return tourDateRepository.findByDestinationIgnoreCase(destination).stream()
+                .map(td -> new TourAvailabilityInfo(
+                        td.getId(),
+                        td.getTour().getName(),
+                        td.getTour().getDestination(),
+                        td.getTour().getPrice(),
+                        td.getDepartureDate(),
+                        td.getReturnDate(),
+                        td.getTotalSpots() - td.getBookedSpots(),
+                        (td.getTotalSpots() - td.getBookedSpots()) > 0
+                ))
+                .toList();
     }
 
     @Transactional
