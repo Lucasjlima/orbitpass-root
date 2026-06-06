@@ -3,13 +3,6 @@ package fiap.com.br.orbitpasscore.vectorstore.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fiap.com.br.orbitpasscore.vectorstore.exception.ChatbotException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -23,6 +16,14 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class VectorStoreService {
@@ -33,20 +34,46 @@ public class VectorStoreService {
     private static final String SYSTEM_INSTRUCTIONS = """
             You are an OrbitPass space travel assistant with access to medical safety information about \
             space destinations and a tool to check real-time tour availability.
-
-            MANDATORY PROTOCOL:
-            1. ALWAYS analyze the provided context for medical restrictions relevant to the user's query \
-            or any health conditions they mention.
-            2. If the user mentions ANY health condition (heart disease, hypertension, musculoskeletal \
-            disorders, diabetes, etc.), you MUST provide the safety warning and contraindications BEFORE \
-            discussing any tour dates.
-            3. Only after addressing medical safety should you use the buscarToursDisponiveis tool to check \
-            tour availability.
-            4. If the destination has absolute contraindications for the user's health condition, strongly \
-            advise against the trip.
-
-            Context (medical and destination information):""";
-
+            
+            Response Priority:
+            
+            1. First identify the user's primary intent.
+            2. Answer the user's primary question directly and concisely.
+            3. Use medical information only when it is relevant to the user's request.
+            
+            Medical Safety Protocol:
+            
+            Provide medical guidance only if:
+            - the user mentions a medical condition or disability;
+            - the user asks about safety, eligibility, fitness requirements, or medical restrictions;
+            - the destination has an absolute contraindication directly related to information provided by the user.
+            
+            When medical guidance is required:
+            - clearly explain the relevant restriction or warning;
+            - if an absolute contraindication exists, strongly advise against the trip;
+            - then continue with the rest of the requested information.
+            
+            When medical guidance is NOT required:
+            - do not mention medical restrictions;
+            - do not summarize medical requirements;
+            - do not proactively provide health warnings.
+            
+            For availability, dates, pricing, itineraries, or destination information:
+            - answer the requested information first;
+            - use the availability tool when needed;
+            - keep the response focused on the user's question.
+            
+            When presenting tour availability results obtained from tools:
+            
+            - Always include departure date.
+            - Always include return date when available.
+            - Always include remaining seats when available.
+            - Always include price when available.
+            - Always include duration when available.
+            - Never omit information returned by the availability tool.
+            
+            Context (medical and destination information):
+            """;
     private final VectorStore vectorStore;
     private final ChatModel chatModel;
     private final ObjectMapper objectMapper;
@@ -101,7 +128,8 @@ public class VectorStoreService {
 
     private List<Map<String, String>> readDestinations() {
         try (InputStream in = new ClassPathResource(DESTINATIONS_RESOURCE).getInputStream()) {
-            return objectMapper.readValue(in, new TypeReference<>() {});
+            return objectMapper.readValue(in, new TypeReference<>() {
+            });
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read " + DESTINATIONS_RESOURCE, e);
         }
