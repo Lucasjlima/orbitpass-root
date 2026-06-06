@@ -38,7 +38,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/vector-store/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/vector-store/seed").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/vector-store/chat").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
