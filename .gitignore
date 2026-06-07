@@ -39,4 +39,7 @@ build/
 .DS_Store
 
 # Environment Variables
-.env
+.env
+
+# Agent Team Metadata
+.agents/

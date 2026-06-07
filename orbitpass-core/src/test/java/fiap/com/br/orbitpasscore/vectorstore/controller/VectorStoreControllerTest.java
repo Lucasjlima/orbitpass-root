@@ -19,11 +19,14 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.test.context.ContextConfiguration;
+
 @WebMvcTest(
         controllers = VectorStoreController.class,
         excludeFilters = @Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = {SecurityConfig.class, SecurityFilter.class}))
+@ContextConfiguration(classes = {VectorStoreController.class, fiap.com.br.orbitpasscore.OrbitpassCoreApplication.class})
 @AutoConfigureMockMvc(addFilters = false)
 class VectorStoreControllerTest {
 
