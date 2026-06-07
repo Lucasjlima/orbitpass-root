@@ -42,4 +42,7 @@ build/
 .env
 
 # Agent Team Metadata
-.agents/
+.agents/
+
+# Documentation artifacts (not versioned)
+*.md
