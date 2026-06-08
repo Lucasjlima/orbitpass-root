@@ -15,6 +15,7 @@ import fiap.com.br.orbitpasscore.user.repository.UserRepository;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,5 +63,51 @@ public class TicketService {
                     .orElseThrow(() -> new TourDateNotFoundException(ticket.getTourDate().getId()));
             td.setBookedSpots(Math.max(0, td.getBookedSpots() - 1)); // release reserved spot
         }
+    }
+
+    @Transactional
+    public Ticket updateTourDate(Long ticketId, Long userId, Long newTourDateId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+
+        if (!ticket.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("You do not have permission to update this ticket");
+        }
+
+        TourDate oldTourDate = ticket.getTourDate();
+
+        if (oldTourDate.getId().equals(newTourDateId)) {
+            return ticket;
+        }
+
+        TourDate newTourDate = tourDateRepository.findByIdForUpdate(newTourDateId)
+                .orElseThrow(() -> new TourDateNotFoundException(newTourDateId));
+
+        if (newTourDate.getBookedSpots() >= newTourDate.getTotalSpots()) {
+            throw new InsufficientSpotsException(newTourDateId);
+        }
+
+        oldTourDate.setBookedSpots(Math.max(0, oldTourDate.getBookedSpots() - 1));
+        newTourDate.setBookedSpots(newTourDate.getBookedSpots() + 1);
+
+        ticket.setTourDate(newTourDate);
+        ticket.setPrice(newTourDate.getTour().getPrice());
+
+        return ticketRepository.save(ticket);
+    }
+
+    @Transactional
+    public void cancelAndBuildRelease(Long ticketId, Long userId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+
+        if (!ticket.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("You do not have permission to cancel this ticket");
+        }
+
+        TourDate tourDate = ticket.getTourDate();
+        tourDate.setBookedSpots(Math.max(0, tourDate.getBookedSpots() - 1));
+
+        ticketRepository.delete(ticket);
     }
 }
