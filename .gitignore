@@ -45,4 +45,6 @@ build/
 .agents/
 
 # Documentation artifacts (not versioned)
-*.md
+*.md
+!README.md
+
