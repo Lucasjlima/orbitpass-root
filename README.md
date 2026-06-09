@@ -207,3 +207,10 @@ Uma vez que ambos os serviços estejam em execução, você poderá acessar as e
 - **Criptografia**: As senhas são criptografadas com hash BCrypt antes do armazenamento.
 - **Tratamento Global de Exceções**: A aplicação utiliza controladores de conselhos (`@RestControllerAdvice`) para formatar respostas amigáveis de erro (ex: `TourNotFoundException`, `InsufficientSpotsException`, `EmailAlreadyRegisteredException`).
 - **Controle de Acesso**: Endpoints administrativos contam com a anotação `@PreAuthorize("hasRole('ADMIN')")`. Rotas comuns exigem `@PreAuthorize("hasAnyRole('ADMIN', 'DEFAULT_USER')")` ou autenticação prévia.
+
+## Integrantes
+
+- Lucas José Lima - RM561160
+- Rangel Bernardi Jordao - RM560547
+- Jhonatta Lima Sandes De Oliveira - RM560277
+
